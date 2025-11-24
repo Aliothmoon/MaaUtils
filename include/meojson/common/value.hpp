@@ -3,9 +3,7 @@
 #pragma once
 
 #include <cstddef>
-#include <filesystem>
 #include <initializer_list>
-#include <map>
 #include <memory>
 #include <optional>
 #include <ostream>
@@ -16,6 +14,11 @@
 #include <variant>
 #include <vector>
 
+#ifdef MEOJSON_FS_PATH_EXTENSION
+#include <filesystem>
+#endif
+
+#include "enum_reflection.hpp"
 #include "exception.hpp"
 #include "utils.hpp"
 
@@ -76,8 +79,17 @@ public:
 
     template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
     value(enum_t e)
+#ifdef MEOJSON_ENUM_AS_NUMBER
         : value(static_cast<std::underlying_type_t<enum_t>>(e))
+#else
+        : value(_reflection::enum_to_string(e))
+#endif
     {
+#ifndef MEOJSON_ENUM_AS_NUMBER
+        if (as_string().empty()) {
+            throw exception("Unknown Enum Value");
+        }
+#endif
     }
 
     template <
@@ -110,26 +122,26 @@ public:
     {
     }
 
-    // Native support for std::optional<T>
+    // Native support for nullable wrappers (std::optional, std::shared_ptr, std::unique_ptr)
     template <
-        typename T,
+        typename wrapper_t,
         std::enable_if_t<
-            !std::is_same_v<std::decay_t<T>, value> && !_utils::has_to_json_in_member<std::optional<T>>::value
-                && !_utils::has_to_json_in_templ_spec<std::optional<T>>::value,
+            _utils::is_nullable<std::decay_t<wrapper_t>> && std::is_constructible_v<value, typename _utils::nullable_value_t<wrapper_t>>
+                && !_utils::has_to_json_in_member<wrapper_t>::value && !_utils::has_to_json_in_templ_spec<wrapper_t>::value,
             bool> = true>
-    value(const std::optional<T>& opt)
-        : value(opt ? value(*opt) : value())
+    value(const wrapper_t& wrapper)
+        : value(wrapper ? value(*wrapper) : value())
     {
     }
 
     template <
-        typename T,
+        typename wrapper_t,
         std::enable_if_t<
-            !std::is_same_v<std::decay_t<T>, value> && !_utils::has_to_json_in_member<std::optional<T>>::value
-                && !_utils::has_to_json_in_templ_spec<std::optional<T>>::value,
+            _utils::is_nullable<std::decay_t<wrapper_t>> && std::is_constructible_v<value, typename _utils::nullable_value_t<wrapper_t>>
+                && !_utils::has_to_json_in_member<wrapper_t>::value && !_utils::has_to_json_in_templ_spec<wrapper_t>::value,
             bool> = true>
-    value(std::optional<T>&& opt)
-        : value(opt ? value(std::move(*opt)) : value())
+    value(wrapper_t&& wrapper)
+        : value(wrapper ? value(std::move(*wrapper)) : value())
     {
     }
 
@@ -463,7 +475,20 @@ public:
     template <typename enum_t, std::enable_if_t<std::is_enum_v<enum_t>, bool> = true>
     explicit operator enum_t() const
     {
-        return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
+        if (is_string()) {
+            if (auto enum_opt = _reflection::string_to_enum<enum_t>(as_string_view()); enum_opt) {
+                return *enum_opt;
+            }
+            else {
+                throw exception("Wrong Enum String Value:" + as_string());
+            }
+        }
+        else if (is_number()) {
+            return static_cast<enum_t>(static_cast<std::underlying_type_t<enum_t>>(*this));
+        }
+        else {
+            throw exception("Wrong Type");
+        }
     }
 
     template <typename jsonization_t, std::enable_if_t<_utils::has_from_json_in_member<jsonization_t>::value, bool> = true>
@@ -500,7 +525,7 @@ public:
         return dst;
     }
 
-    // Native support for converting to std::optional<T>
+    // Native support for converting to nullable wrappers (std::optional, std::shared_ptr, std::unique_ptr)
     template <typename T>
     explicit operator std::optional<T>() const&
     {
@@ -517,6 +542,42 @@ public:
             return std::nullopt;
         }
         return std::optional<T>(static_cast<T>(std::move(*this)));
+    }
+
+    template <typename T>
+    explicit operator std::shared_ptr<T>() const&
+    {
+        if (is_null()) {
+            return nullptr;
+        }
+        return std::make_shared<T>(static_cast<T>(*this));
+    }
+
+    template <typename T>
+    explicit operator std::shared_ptr<T>() &&
+    {
+        if (is_null()) {
+            return nullptr;
+        }
+        return std::make_shared<T>(static_cast<T>(std::move(*this)));
+    }
+
+    template <typename T>
+    explicit operator std::unique_ptr<T>() const&
+    {
+        if (is_null()) {
+            return nullptr;
+        }
+        return std::make_unique<T>(static_cast<T>(*this));
+    }
+
+    template <typename T>
+    explicit operator std::unique_ptr<T>() &&
+    {
+        if (is_null()) {
+            return nullptr;
+        }
+        return std::make_unique<T>(static_cast<T>(std::move(*this)));
     }
 
     // Native support for converting to std::variant<Ts...>
