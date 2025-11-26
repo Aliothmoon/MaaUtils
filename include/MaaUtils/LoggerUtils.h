@@ -103,7 +103,9 @@ private:
     template <typename T>
     void stream(T&& value, const separator& sep)
     {
-        buffer_ << json::value(std::forward<T>(value)).dumps() << sep.str;
+        json::value(std::forward<T>(value)) j;
+        // 直接 dumps 的 string 会多一对双引号，有点难看
+        buffer_ << j.is_string() ? j.as_string() : j.dumps() << sep.str;
     }
 
     template <typename... args_t>
