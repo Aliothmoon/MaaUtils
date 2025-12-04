@@ -72,9 +72,10 @@ ChildPipeIOStream::ChildPipeIOStream(const std::filesystem::path& exec, const st
           args_,
           boost::process::std_out > pin_,
           boost::process::std_err > boost::process::null,
-          boost::process::std_in < pout_
+          boost::process::std_in < pout_,
+          boost::process::start_dir = exec_.parent_path()
 #ifdef _WIN32
-          ,
+              ,
           prevent_inherit(),
           boost::process::windows::create_no_window
 #endif
