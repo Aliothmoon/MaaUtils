@@ -21,6 +21,11 @@ std::string utf8_to_crt(std::string_view utf8_str)
     return std::string(utf8_str);
 }
 
+std::string crt_to_utf8(std::string_view ctr_str)
+{
+    return std::string(ctr_str);
+}
+
 std::string path_to_utf8_string(const std::filesystem::path& path)
 {
     return path.native();

@@ -47,6 +47,14 @@ std::string utf8_to_crt(std::string_view utf8_str)
     return wide_to_multi(to_osstring(utf8_str), CP_ACP);
 }
 
+std::string crt_to_utf8(std::string_view ctr_str)
+{
+    int len = MultiByteToWideChar(CP_ACP, 0, ctr_str.data(), (int)ctr_str.size(), nullptr, 0);
+    os_string wide(len, 0);
+    MultiByteToWideChar(CP_ACP, 0, ctr_str.data(), (int)ctr_str.size(), wide.data(), len);
+    return wide_to_multi(wide, CP_UTF8);
+}
+
 // 转义参考:
 // https://ipvb.gitee.io/windows/2019/07/21/CmdlineReEscape/
 // https://github.com/microsoft/terminal/pull/1815
