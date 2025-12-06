@@ -30,6 +30,9 @@ MAA_UTILS_API os_string to_osstring(std::string_view utf8_str);
 MAA_UTILS_API std::string from_osstring(os_string_view os_str);
 MAA_UTILS_API std::string utf8_to_crt(std::string_view utf8_str);
 MAA_UTILS_API std::string crt_to_utf8(std::string_view ctr_str);
+#ifdef _WIN32
+MAA_UTILS_API std::string gbk_to_utf8(std::string_view gkb_str);
+#endif
 
 inline std::filesystem::path path(std::string_view utf8_str)
 {

@@ -18,22 +18,24 @@ std::string path_to_utf8_string(const std::filesystem::path& path)
     return from_osstring(osstr);
 }
 
+os_string multi_to_wide(std::string_view multi_str, UINT code)
+{
+    int len = MultiByteToWideChar(code, 0, multi_str.data(), (int)multi_str.size(), nullptr, 0);
+    os_string result(len, 0);
+    MultiByteToWideChar(code, 0, multi_str.data(), (int)multi_str.size(), result.data(), len);
+    return result;
+}
+
 os_string to_osstring(std::string_view utf8_str)
 {
-    int len = MultiByteToWideChar(CP_UTF8, 0, utf8_str.data(), (int)utf8_str.size(), nullptr, 0);
-    os_string result(len, 0);
-    MultiByteToWideChar(CP_UTF8, 0, utf8_str.data(), (int)utf8_str.size(), result.data(), len);
-    return result;
+    return multi_to_wide(utf8_str, CP_UTF8);
 }
 
 std::string wide_to_multi(os_string_view os_str, UINT code)
 {
     int len = WideCharToMultiByte(code, 0, os_str.data(), (int)os_str.size(), nullptr, 0, nullptr, nullptr);
-
     std::string result(len, 0);
-
     WideCharToMultiByte(code, 0, os_str.data(), (int)os_str.size(), result.data(), len, nullptr, nullptr);
-
     return result;
 }
 
@@ -44,15 +46,27 @@ std::string from_osstring(os_string_view os_str)
 
 std::string utf8_to_crt(std::string_view utf8_str)
 {
-    return wide_to_multi(to_osstring(utf8_str), CP_ACP);
+    UINT acp = GetACP();
+    if (acp == CP_UTF8) {
+        return std::string(utf8_str);
+    }
+
+    return wide_to_multi(to_osstring(utf8_str), acp);
 }
 
 std::string crt_to_utf8(std::string_view ctr_str)
 {
-    int len = MultiByteToWideChar(CP_ACP, 0, ctr_str.data(), (int)ctr_str.size(), nullptr, 0);
-    os_string wide(len, 0);
-    MultiByteToWideChar(CP_ACP, 0, ctr_str.data(), (int)ctr_str.size(), wide.data(), len);
-    return wide_to_multi(wide, CP_UTF8);
+    UINT acp = GetACP();
+    if (acp == CP_UTF8) {
+        return std::string(ctr_str);
+    }
+
+    return wide_to_multi(multi_to_wide(ctr_str, acp), CP_UTF8);
+}
+
+std::string gbk_to_utf8(std::string_view gkb_str)
+{
+    return wide_to_multi(multi_to_wide(gkb_str, 936), CP_UTF8);
 }
 
 // 转义参考:
