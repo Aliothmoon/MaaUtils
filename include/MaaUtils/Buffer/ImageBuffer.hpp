@@ -68,6 +68,13 @@ public:
 private:
     void from_encoded(ImageEncodedBuffer buffer)
     {
+        if (buffer.empty()) {
+            image_.release();
+            encoded_cache_.clear();
+            dirty_ = false;
+            return;
+        }
+
         image_ = cv::imdecode(buffer, cv::IMREAD_COLOR);
         encoded_cache_ = std::move(buffer);
         dirty_ = false;
