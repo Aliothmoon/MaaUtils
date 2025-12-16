@@ -52,7 +52,7 @@ public:
 
 private:
     std::map<ObserverId, std::shared_ptr<SinkT>> observers_;
-    inline static std::atomic<ObserverId> s_global_ob_id = 400'000'000;
+    inline static std::atomic<ObserverId> s_global_ob_id = 0;
 };
 
 MAA_NS_END
