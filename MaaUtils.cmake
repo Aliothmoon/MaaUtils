@@ -5,7 +5,7 @@ cmake_policy(SET CMP0155 OLD)
 option(BUILD_MAA_UTILS "build maa utils" ON)
 option(WITH_RPATH_LIBRARY "with rpath library for linux" ${LINUX})
 
-if (WITH_RPATH_LIBRARY AND NOT DEFINED RPATH_LIBRARY_INSTALL_DIR)
+if(WITH_RPATH_LIBRARY AND NOT DEFINED RPATH_LIBRARY_INSTALL_DIR)
     set(RPATH_LIBRARY_INSTALL_DIR bin)
 endif()
 
@@ -24,7 +24,7 @@ include(${MAAUTILS_DIR}/cmake/utils.cmake)
 include(${MAAUTILS_DIR}/cmake/version.cmake)
 
 find_package(OpenCV REQUIRED COMPONENTS core imgproc imgcodecs)
-find_package(Boost REQUIRED CONFIG COMPONENTS system)
+find_package(Boost REQUIRED CONFIG COMPONENTS system regex)
 find_package(ZLIB REQUIRED)
 find_package(fastdeploy_ppocr REQUIRED)
 find_package(ONNXRuntime REQUIRED)
