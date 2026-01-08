@@ -136,10 +136,6 @@ bool Logger::rotate()
     const std::filesystem::path bak_path = log_dir_ / kLogbakFilename;
     std::filesystem::copy(log_path_, bak_path, std::filesystem::copy_options::overwrite_existing, ec);
 
-    const std::filesystem::path dumps_bak_path = log_dir_ / kDumpsbakDirname;
-    if (std::filesystem::exists(dumps_bak_path)) {
-        std::filesystem::remove_all(dumps_bak_path, ec);
-    }
     return true;
 }
 

@@ -10,8 +10,6 @@ class MAA_UTILS_API Logger
 public:
     static constexpr std::string_view kLogFilename = "maa.log";
     static constexpr std::string_view kLogbakFilename = "maa.bak.log";
-    static constexpr std::string_view kDumpsDirname = "dumps";
-    static constexpr std::string_view kDumpsbakDirname = "dumps.bak";
 
 public:
     static Logger& get_instance();
