@@ -31,6 +31,8 @@ public:
     virtual bool release() override;
     virtual bool is_open() const override;
 
+    bool running();
+
 protected:
     virtual std::string read_once(size_t max_count) override;
 
