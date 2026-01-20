@@ -45,7 +45,8 @@ inline bool imwrite(const std::filesystem::path& path, cv::InputArray img, const
         return false;
     }
     of.write(reinterpret_cast<char*>(encoded.data()), encoded.size());
-    return of.good();
+    of.close();
+    return !of.fail();
 }
 
 inline bool imwrite(const std::string& utf8_path, cv::InputArray img, const std::vector<int>& params = std::vector<int>())
